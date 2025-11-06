@@ -9,13 +9,17 @@ AI-powered resume customizer that tailors your resume bullet points to match spe
 - **Character Control**: Ensures each bullet point stays between 180-220 characters to prevent page overflow
 - **Selective Updates**: Only modifies bullet points in work experience and projects sections, leaving other sections untouched
 - **Batch Processing**: Processes all bullet points efficiently while showing progress
+- **PDF Output**: Automatically generates PDF version (requires LibreOffice) or provides manual conversion options
 
 ## How It Works
 
 1. **Configure**: Define your resume bullet points once in `bullets_config.py`
 2. **Analyze**: Reads the target job description
 3. **Optimize**: Uses AI to rewrite each bullet point to highlight relevant skills and achievements
-4. **Output**: Generates optimized bullets in a text file for easy copy-paste (and optionally updates your resume.docx)
+4. **Output**: Generates three files:
+   - `optimized_resume_bullets.txt` - Optimized bullets (copy-paste ready)
+   - `optimized_resume.docx` - Updated Word document (if structure matches)
+   - `optimized_resume.pdf` - PDF version (if LibreOffice is available)
 
 ## Installation
 
@@ -64,10 +68,11 @@ ANTHROPIC_API_KEY=your_actual_api_key_here
    python main.py
    ```
 
-4. **Get your optimized bullets**:
-   - Optimized bullets saved to `output/optimized_resume_bullets.txt`
-   - Copy and paste them into your resume template
-   - If resume structure matches, `output/optimized_resume.docx` is also generated
+4. **Get your optimized resume**:
+   - `output/optimized_resume_bullets.txt` - Copy-paste ready bullets
+   - `output/optimized_resume.docx` - Updated Word document (if successful)
+   - `output/optimized_resume.pdf` - PDF version (if LibreOffice available)
+   - See [CONVERT_TO_PDF.md](CONVERT_TO_PDF.md) for manual PDF conversion options
 
 ### Custom Paths
 
@@ -196,6 +201,15 @@ ResumeGen/
 ### "Format looks different"
 - The tool preserves most formatting, but complex styling may need manual adjustment
 - Check that your original resume uses standard Word formatting
+
+### PDF Generation Issues
+- **LibreOffice not found**: Install LibreOffice for automatic PDF generation
+  - Mac: `brew install --cask libreoffice`
+  - Linux: `sudo apt-get install libreoffice`
+- **PDF generation failed**: Use manual conversion methods (see [CONVERT_TO_PDF.md](CONVERT_TO_PDF.md))
+  - Recommended: Open .docx in Microsoft Word → Save as PDF
+  - Alternative: Use Google Docs or online converters
+- The optimized bullets are always saved to `.txt` file regardless of PDF generation
 
 ## Advanced Usage
 

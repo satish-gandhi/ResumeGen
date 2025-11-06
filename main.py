@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from resume_optimizer.parsers.resume_parser import ResumeParser
 from resume_optimizer.rewriters.ai_rewriter import AIBulletRewriter
 from resume_optimizer.generators.resume_generator import ResumeGenerator
+from resume_optimizer.generators.pdf_converter import PDFConverter
 from bullets_config import get_all_bullets, get_bullet_count
 
 
@@ -156,12 +157,14 @@ def main():
     print(f"✓ Saved optimized bullets to: {output_txt}")
 
     # Try to update the resume.docx if structure matches
+    docx_created = False
     if len(parsed_bullets) == len(rewritten_bullets):
         try:
             generator = ResumeGenerator(parser.get_document())
             generator.update_bullet_points(rewritten_bullets)
             generator.save(OUTPUT_PATH)
             print(f"✓ Updated resume saved to: {OUTPUT_PATH}")
+            docx_created = True
         except Exception as e:
             print(f"⚠️  Could not auto-update resume.docx: {e}")
             print(f"   Please manually copy bullets from: {output_txt}")
@@ -169,11 +172,35 @@ def main():
         print(f"⚠️  Resume structure mismatch (config has {len(rewritten_bullets)} bullets, resume has {len(parsed_bullets)})")
         print(f"   Please manually copy bullets from: {output_txt}")
 
+    # Convert to PDF
+    output_pdf = OUTPUT_PATH.replace('.docx', '.pdf')
+    pdf_created = False
+
+    if docx_created:
+        try:
+            print(f"\nGenerating PDF from optimized resume...")
+            pdf_converter = PDFConverter()
+
+            if not pdf_converter.is_available():
+                print(f"⚠️  LibreOffice not found - PDF generation skipped")
+                print(f"   Install LibreOffice to enable PDF conversion:")
+                print(f"   Mac: brew install --cask libreoffice")
+                print(f"   Linux: sudo apt-get install libreoffice")
+            else:
+                pdf_path = pdf_converter.convert_to_pdf(OUTPUT_PATH)
+                print(f"✓ PDF resume saved to: {pdf_path}")
+                pdf_created = True
+        except Exception as e:
+            print(f"⚠️  Could not generate PDF: {e}")
+            print(f"   You can manually convert {OUTPUT_PATH} to PDF")
+
     print("\n" + "=" * 60)
     print("✓ Success! Your optimized bullets are ready.")
     print(f"📁 Bullets file: {output_txt}")
     if os.path.exists(OUTPUT_PATH):
         print(f"📁 Resume file: {OUTPUT_PATH}")
+    if pdf_created and os.path.exists(output_pdf):
+        print(f"📁 PDF resume: {output_pdf}")
     print("=" * 60)
 
 

@@ -1,3 +1,8 @@
 python-docx==1.1.2
 anthropic==0.40.0
 python-dotenv==1.0.1
+
+# PDF generation (requires LibreOffice to be installed)
+# On Mac: brew install --cask libreoffice
+# On Linux: sudo apt-get install libreoffice
+# On Windows: Download from https://www.libreoffice.org/
