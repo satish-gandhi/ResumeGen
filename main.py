@@ -56,7 +56,7 @@ def main():
     OUTPUT_PATH = os.getenv("OUTPUT_PATH", "output/optimized_resume.docx")
     MIN_CHARS = int(os.getenv("MIN_BULLET_CHARS", "180"))
     MAX_CHARS = int(os.getenv("MAX_BULLET_CHARS", "220"))
-    CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20240620")
+    CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-5-20250929")
 
     # Validate input files exist
     if not os.path.exists(RESUME_PATH):
