@@ -11,13 +11,13 @@ import os
 class AIBulletRewriter:
     """Rewrites resume bullet points using Claude AI to match job descriptions."""
 
-    def __init__(self, api_key: str = None, model: str = "claude-3-5-sonnet-20241022"):
+    def __init__(self, api_key: str = None, model: str = "claude-3-5-sonnet-20240620"):
         """
         Initialize the AI rewriter.
 
         Args:
             api_key: Anthropic API key (if None, reads from ANTHROPIC_API_KEY env var)
-            model: Claude model to use
+            model: Claude model to use (default: claude-3-5-sonnet-20240620)
         """
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
