@@ -2,6 +2,7 @@
 """
 Resume Optimizer - Main Script
 Optimizes resume bullet points to align with job descriptions using AI.
+Uses static bullet points from bullets_config.py
 """
 
 import os
@@ -15,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from resume_optimizer.parsers.resume_parser import ResumeParser
 from resume_optimizer.rewriters.ai_rewriter import AIBulletRewriter
 from resume_optimizer.generators.resume_generator import ResumeGenerator
+from bullets_config import get_all_bullets, get_bullet_count
 
 
 def read_job_description(job_desc_path: str) -> str:
@@ -70,15 +72,33 @@ def main():
     print(f"📝 Output: {OUTPUT_PATH}")
     print(f"📏 Character Range: {MIN_CHARS}-{MAX_CHARS} per bullet\n")
 
-    # Step 1: Parse Resume
-    print("Step 1/4: Parsing resume...")
-    parser = ResumeParser(RESUME_PATH)
-    bullet_points = parser.extract_bullet_points()
-    print(f"✓ Extracted {len(bullet_points)} bullet points from work experience and projects\n")
+    # Step 1: Load Static Bullet Points
+    print("Step 1/4: Loading static bullet points from config...")
+    static_bullets = get_all_bullets()
+    print(f"✓ Loaded {len(static_bullets)} bullet points from bullets_config.py\n")
 
-    if len(bullet_points) == 0:
-        print("Warning: No bullet points found. Please ensure your resume has bullet points in work experience or projects sections.")
+    if len(static_bullets) == 0:
+        print("Error: No bullet points found in bullets_config.py")
+        print("Please define your bullet points in bullets_config.py")
         sys.exit(1)
+
+    # Parse resume to get paragraph positions (for updating the .docx later)
+    parser = ResumeParser(RESUME_PATH)
+    parsed_bullets = parser.extract_bullet_points()
+
+    # Create bullet_info dicts from static bullets
+    bullet_points = []
+    for i, bullet_text in enumerate(static_bullets):
+        bullet_info = {
+            'text': bullet_text,
+            'character_count': len(bullet_text),
+            'index': i
+        }
+        # If we have parsed positions, use them
+        if i < len(parsed_bullets):
+            bullet_info['paragraph_index'] = parsed_bullets[i]['paragraph_index']
+            bullet_info['original_paragraph'] = parsed_bullets[i]['original_paragraph']
+        bullet_points.append(bullet_info)
 
     # Step 2: Read Job Description
     print("Step 2/4: Reading job description...")
@@ -118,15 +138,41 @@ def main():
         print("3. Your API key is valid and has credits")
         sys.exit(1)
 
-    # Step 4: Generate Modified Resume
-    print("\nStep 4/4: Generating optimized resume...")
-    generator = ResumeGenerator(parser.get_document())
-    generator.update_bullet_points(rewritten_bullets)
-    generator.save(OUTPUT_PATH)
+    # Step 4: Save Rewritten Bullets
+    print("\nStep 4/4: Saving optimized bullets...")
+
+    # Save to text file for easy copy-paste
+    output_txt = OUTPUT_PATH.replace('.docx', '_bullets.txt')
+    with open(output_txt, 'w', encoding='utf-8') as f:
+        f.write("=" * 70 + "\n")
+        f.write("OPTIMIZED RESUME BULLET POINTS\n")
+        f.write("=" * 70 + "\n\n")
+
+        for i, bullet in enumerate(rewritten_bullets, 1):
+            f.write(f"{i}. [{bullet['rewritten_char_count']} chars]\n")
+            f.write(f"   {bullet['rewritten_text']}\n\n")
+
+    print(f"✓ Saved optimized bullets to: {output_txt}")
+
+    # Try to update the resume.docx if structure matches
+    if len(parsed_bullets) == len(rewritten_bullets):
+        try:
+            generator = ResumeGenerator(parser.get_document())
+            generator.update_bullet_points(rewritten_bullets)
+            generator.save(OUTPUT_PATH)
+            print(f"✓ Updated resume saved to: {OUTPUT_PATH}")
+        except Exception as e:
+            print(f"⚠️  Could not auto-update resume.docx: {e}")
+            print(f"   Please manually copy bullets from: {output_txt}")
+    else:
+        print(f"⚠️  Resume structure mismatch (config has {len(rewritten_bullets)} bullets, resume has {len(parsed_bullets)})")
+        print(f"   Please manually copy bullets from: {output_txt}")
 
     print("\n" + "=" * 60)
-    print("✓ Success! Your optimized resume is ready.")
-    print(f"📁 Saved to: {OUTPUT_PATH}")
+    print("✓ Success! Your optimized bullets are ready.")
+    print(f"📁 Bullets file: {output_txt}")
+    if os.path.exists(OUTPUT_PATH):
+        print(f"📁 Resume file: {OUTPUT_PATH}")
     print("=" * 60)
 
 

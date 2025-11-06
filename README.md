@@ -12,10 +12,10 @@ AI-powered resume customizer that tailors your resume bullet points to match spe
 
 ## How It Works
 
-1. **Parse**: Extracts bullet points from your resume's work experience and projects sections
+1. **Configure**: Define your resume bullet points once in `bullets_config.py`
 2. **Analyze**: Reads the target job description
 3. **Optimize**: Uses AI to rewrite each bullet point to highlight relevant skills and achievements
-4. **Generate**: Creates a new resume with optimized bullets while preserving original formatting
+4. **Output**: Generates optimized bullets in a text file for easy copy-paste (and optionally updates your resume.docx)
 
 ## Installation
 
@@ -51,15 +51,23 @@ ANTHROPIC_API_KEY=your_actual_api_key_here
 
 ### Basic Usage
 
-1. Place your resume in the `input/` directory as `resume.docx`
-2. Place the job description in `input/job_description.txt` (or `.docx`)
-3. Run the optimizer:
+1. **Configure your bullet points** (one-time setup):
+   - Edit `bullets_config.py`
+   - Add your resume bullet points to `WORK_EXPERIENCE_BULLETS` and `PROJECTS_BULLETS`
+   - Save the file
 
-```bash
-python main.py
-```
+2. **Add job description**:
+   - Place the job description in `input/job_description.txt` (or `.docx`)
 
-4. Your optimized resume will be saved to `output/optimized_resume.docx`
+3. **Run the optimizer**:
+   ```bash
+   python main.py
+   ```
+
+4. **Get your optimized bullets**:
+   - Optimized bullets saved to `output/optimized_resume_bullets.txt`
+   - Copy and paste them into your resume template
+   - If resume structure matches, `output/optimized_resume.docx` is also generated
 
 ### Custom Paths
 
@@ -82,21 +90,49 @@ MAX_BULLET_CHARS=220
 
 These limits ensure your resume stays within one page while maintaining impactful content.
 
+### Configuring Your Bullet Points
+
+The `bullets_config.py` file contains your static bullet points. Edit this file to match your resume:
+
+```python
+# Work Experience Bullets
+WORK_EXPERIENCE_BULLETS = [
+    "Your first work experience bullet point here",
+    "Your second work experience bullet point here",
+    # ... add all your work experience bullets
+]
+
+# Projects Bullets
+PROJECTS_BULLETS = [
+    "Your first project bullet point here",
+    "Your second project bullet point here",
+    # ... add all your project bullets
+]
+```
+
+**Tips:**
+- Add bullets in the exact order they appear in your resume
+- Each bullet should be a complete string (no bullet characters like • or -)
+- You can organize with comments to mark different companies/projects
+- Run `python test_static_bullets.py` to verify your configuration
+
 ## Project Structure
 
 ```
 ResumeGen/
 ├── main.py                          # Main execution script
+├── bullets_config.py                # Your static bullet points (EDIT THIS!)
+├── test_static_bullets.py           # Test your bullet configuration
 ├── requirements.txt                 # Python dependencies
 ├── .env.example                     # Environment variables template
 ├── README.md                        # This file
 ├── input/                           # Input files directory
-│   ├── resume.docx                  # Your original resume
+│   ├── resume.docx                  # Your resume template (optional)
 │   └── job_description.txt          # Target job description
-├── output/                          # Generated resumes
-│   └── optimized_resume.docx        # AI-optimized resume
+├── output/                          # Generated output
+│   ├── optimized_resume_bullets.txt # Optimized bullets (copy-paste ready)
+│   └── optimized_resume.docx        # Auto-updated resume (if possible)
 ├── examples/                        # Example files
-│   ├── sample_resume.docx
 │   └── sample_job_description.txt
 └── src/
     └── resume_optimizer/
@@ -108,15 +144,14 @@ ResumeGen/
             └── resume_generator.py
 ```
 
-## How to Prepare Your Resume
+## Quick Start
 
-For best results:
-
-1. **Use a Word document** (`.docx` format)
-2. **Include clear section headers** like "Work Experience", "Projects", "Professional Experience"
-3. **Use bullet points** for achievements (•, -, *, etc.)
-4. **Keep formatting consistent** throughout your resume
-5. **One page format** - the tool helps maintain this by controlling bullet length
+1. **Edit `bullets_config.py`** with your resume bullet points
+2. **Test your config**: `python test_static_bullets.py`
+3. **Add your API key** to `.env` file
+4. **Add job description** to `input/job_description.txt`
+5. **Run optimizer**: `python main.py`
+6. **Copy optimized bullets** from `output/optimized_resume_bullets.txt`
 
 ## Configuration Options
 
@@ -145,9 +180,10 @@ For best results:
 
 ## Troubleshooting
 
-### "No bullet points found"
-- Ensure your resume has bullet points in "Work Experience" or "Projects" sections
-- Check that section headers contain keywords like "experience", "projects", "employment"
+### "No bullet points found in bullets_config.py"
+- Make sure you've edited `bullets_config.py` with your actual resume bullets
+- Check that `WORK_EXPERIENCE_BULLETS` and `PROJECTS_BULLETS` lists are not empty
+- Run `python test_static_bullets.py` to verify your configuration
 
 ### "API key error"
 - Verify your `ANTHROPIC_API_KEY` is set correctly in `.env`
