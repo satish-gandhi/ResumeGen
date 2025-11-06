@@ -17,7 +17,7 @@ from resume_optimizer.parsers.resume_parser import ResumeParser
 from resume_optimizer.rewriters.ai_rewriter import AIBulletRewriter
 from resume_optimizer.generators.resume_generator import ResumeGenerator
 from resume_optimizer.generators.pdf_converter import PDFConverter
-from bullets_config import get_all_bullets, get_bullet_count
+from bullets_config import get_all_bullets, get_bullet_count, get_structured_bullets
 
 
 def read_job_description(job_desc_path: str) -> str:
@@ -77,7 +77,10 @@ def main():
     # Step 1: Load Static Bullet Points
     print("Step 1/4: Loading static bullet points from config...")
     static_bullets = get_all_bullets()
-    print(f"✓ Loaded {len(static_bullets)} bullet points from bullets_config.py\n")
+    structured_data = get_structured_bullets()
+    print(f"✓ Loaded {len(static_bullets)} bullet points from bullets_config.py")
+    print(f"  - Work Experience: {len(structured_data['work_experience'])} companies")
+    print(f"  - Projects: {len(structured_data['projects'])} projects\n")
 
     if len(static_bullets) == 0:
         print("Error: No bullet points found in bullets_config.py")
@@ -88,19 +91,47 @@ def main():
     parser = ResumeParser(RESUME_PATH)
     parsed_bullets = parser.extract_bullet_points()
 
-    # Create bullet_info dicts from static bullets
+    # Create bullet_info dicts from static bullets with structure metadata
     bullet_points = []
-    for i, bullet_text in enumerate(static_bullets):
-        bullet_info = {
-            'text': bullet_text,
-            'character_count': len(bullet_text),
-            'index': i
-        }
-        # If we have parsed positions, use them
-        if i < len(parsed_bullets):
-            bullet_info['paragraph_index'] = parsed_bullets[i]['paragraph_index']
-            bullet_info['original_paragraph'] = parsed_bullets[i]['original_paragraph']
-        bullet_points.append(bullet_info)
+    bullet_index = 0
+
+    # Process work experience
+    for work_idx, work in enumerate(structured_data['work_experience']):
+        for bullet_text in work['bullets']:
+            bullet_info = {
+                'text': bullet_text,
+                'character_count': len(bullet_text),
+                'index': bullet_index,
+                'section_type': 'work_experience',
+                'section_index': work_idx,
+                'company': work['company'],
+                'title': work['title'],
+                'dates': work['dates']
+            }
+            # If we have parsed positions, use them
+            if bullet_index < len(parsed_bullets):
+                bullet_info['paragraph_index'] = parsed_bullets[bullet_index]['paragraph_index']
+                bullet_info['original_paragraph'] = parsed_bullets[bullet_index]['original_paragraph']
+            bullet_points.append(bullet_info)
+            bullet_index += 1
+
+    # Process projects
+    for proj_idx, project in enumerate(structured_data['projects']):
+        for bullet_text in project['bullets']:
+            bullet_info = {
+                'text': bullet_text,
+                'character_count': len(bullet_text),
+                'index': bullet_index,
+                'section_type': 'project',
+                'section_index': proj_idx,
+                'name': project['name']
+            }
+            # If we have parsed positions, use them
+            if bullet_index < len(parsed_bullets):
+                bullet_info['paragraph_index'] = parsed_bullets[bullet_index]['paragraph_index']
+                bullet_info['original_paragraph'] = parsed_bullets[bullet_index]['original_paragraph']
+            bullet_points.append(bullet_info)
+            bullet_index += 1
 
     # Step 2: Read Job Description
     print("Step 2/4: Reading job description...")
@@ -143,16 +174,45 @@ def main():
     # Step 4: Save Rewritten Bullets
     print("\nStep 4/4: Saving optimized bullets...")
 
-    # Save to text file for easy copy-paste
+    # Save to text file with structured format (grouped by company/project)
     output_txt = OUTPUT_PATH.replace('.docx', '_bullets.txt')
     with open(output_txt, 'w', encoding='utf-8') as f:
-        f.write("=" * 70 + "\n")
+        f.write("=" * 80 + "\n")
         f.write("OPTIMIZED RESUME BULLET POINTS\n")
-        f.write("=" * 70 + "\n\n")
+        f.write("=" * 80 + "\n\n")
 
-        for i, bullet in enumerate(rewritten_bullets, 1):
-            f.write(f"{i}. [{bullet['rewritten_char_count']} chars]\n")
-            f.write(f"   {bullet['rewritten_text']}\n\n")
+        # Group bullets by work experience
+        work_exp_num = 1
+        for work in structured_data['work_experience']:
+            f.write(f"WORK EXPERIENCE #{work_exp_num}: {work['company']}\n")
+            f.write(f"{work['title']} | {work['dates']}\n")
+            f.write("-" * 80 + "\n")
+
+            # Find all bullets for this company
+            for bullet in rewritten_bullets:
+                if (bullet.get('section_type') == 'work_experience' and
+                    bullet.get('section_index') == work_exp_num - 1):
+                    f.write(f"• {bullet['rewritten_text']}\n")
+                    f.write(f"  [{bullet['rewritten_char_count']} chars]\n\n")
+
+            work_exp_num += 1
+            f.write("\n")
+
+        # Group bullets by projects
+        project_num = 1
+        for project in structured_data['projects']:
+            f.write(f"PROJECT #{project_num}: {project['name']}\n")
+            f.write("-" * 80 + "\n")
+
+            # Find all bullets for this project
+            for bullet in rewritten_bullets:
+                if (bullet.get('section_type') == 'project' and
+                    bullet.get('section_index') == project_num - 1):
+                    f.write(f"• {bullet['rewritten_text']}\n")
+                    f.write(f"  [{bullet['rewritten_char_count']} chars]\n\n")
+
+            project_num += 1
+            f.write("\n")
 
     print(f"✓ Saved optimized bullets to: {output_txt}")
 
